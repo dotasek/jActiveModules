@@ -32,13 +32,13 @@ import org.cytoscape.model.CyTableUtil;
 public class ActivePathFinderParameters {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivePathFinderParameters.class);
-	
+
 	double initialTemperature = 1.0;
 	double finalTemperature = 0.01;
 	double hubAdjustment = 0;
 	double overlapThreshold = 0.8;
 	int totalIterations = 2500;
-    int randomIterations = 100;
+	int randomIterations = 100;
 	int numberOfPaths = 5;
 	int displayInterval = 500;
 	int pseudoRandomSeed = Math.abs((int) System.currentTimeMillis());
@@ -57,109 +57,108 @@ public class ActivePathFinderParameters {
 	boolean exit = false;
 	int maxThreads = 1;
 	boolean greedySearch = true;
-    boolean run = false;
-    boolean save = false;
-    boolean randomizeExpression = false;
-    String outputFile = "output.txt";
-   	List<String> expressionAttrs = new ArrayList<String>();
-   	
-    List<String> possibleExpressionAttrs = new ArrayList<String>();
-    	
-    List<Boolean> switchSigs = new ArrayList<Boolean>();
-    List<String> scalingMethods = new ArrayList<String>();
-    private CyNetwork network;
-    
-	// ---------------------------------------------------------------------------------------
-    public ActivePathFinderParameters(){
-    	Properties properties = (Properties) ServicesUtil.cytoscapePropertiesServiceRef.getProperties();
-	for (Enumeration e = properties.propertyNames() ; e.hasMoreElements() ;) {
-	    String name = (String)e.nextElement();
-	    if(name.startsWith("AP")){
-		String property = properties.getProperty(name);
-		if(name.endsWith("initialTemperature")){
-		    initialTemperature = Double.valueOf(property);
-		}
-		else if(name.endsWith("finalTemperature")){
-		    finalTemperature = Double.valueOf(property);
-		}
-		else if(name.endsWith("hubAdjustment")){
-		    hubAdjustment = Double.valueOf(property);
-		}
-		else if(name.endsWith("totalIterations")){
-		    totalIterations = Integer.valueOf(property);
-		}
-		else if(name.endsWith("numberPaths")){
-		    numberOfPaths = Integer.valueOf(property);
-		}
-		else if(name.endsWith("displayInterval")){
-		    displayInterval = Integer.valueOf(property);
-		}
-		else if(name.endsWith("hubSize")){
-		    minHubSize = Integer.valueOf(property);
-		}
-		else if(name.endsWith("randomSeed")){
-		    randomSeed = Integer.valueOf(property);
-		}
-		else if(name.endsWith("searchDepth")){
-		    searchDepth = Integer.valueOf(property);
-		}
-		else if(name.endsWith("maxDepth")){
-		    maxDepth = Integer.valueOf(property);
-		}
-		else if(name.endsWith("quench")){
-		    toQuench = Boolean.valueOf(property);
-		}
-		else if(name.endsWith("mcBoolean")){
-		    mcBoolean = Boolean.valueOf(property);
-		}
-		else if(name.endsWith("mcFileName")){
-		    mcFileName = property;
-		}
-		else if(name.endsWith("regional")){
-		    regionalBoolean = Boolean.valueOf(property);
-		}
-		else if(name.endsWith("exit")){
-		    exit = Boolean.valueOf(property);
-		}
-		else if(name.endsWith("run")){
-		    run = Boolean.valueOf(property);
-		}
-		else if(name.endsWith("save")){
-		    save = Boolean.valueOf(property);
-		}
-		else if(name.endsWith("maxThreads")){
-		    maxThreads = Integer.valueOf(property);
-		}
-		else if(name.endsWith("anneal")){
-		    greedySearch = !Boolean.valueOf(property);
-		}
-		else if(name.endsWith("outputFile")){
-		    outputFile = property;
-		}
-		else if(name.endsWith("expression")){
-		    String [] splat = property.split(",");
-		    for(int idx=0;idx < splat.length; idx += 1){
-			expressionAttrs.add(splat[idx]);
-		    }
-		}
-		else if(name.endsWith("randomizeExpression")){
-		    randomizeExpression = Boolean.valueOf(property);
-		}
-		else if(name.endsWith("randomIterations")){
-		    randomIterations = Integer.valueOf(property);
-		}
-		else if(name.endsWith("overlapThreshold")){
-		    overlapThreshold = Double.valueOf(property);
-		}
-		else{
-		    logger.warn("Unrecognized option "+name);
-		}
-	    }
+	boolean run = false;
+	boolean save = false;
+	boolean randomizeExpression = false;
+	String outputFile = "output.txt";
 
+	List<String> expressionAttrs = new ArrayList<String>();
+	List<String> possibleExpressionAttrs = new ArrayList<String>();
+	List<Boolean> switchSigs = new ArrayList<Boolean>();
+	List<String> scalingMethods = new ArrayList<String>();
+	private CyNetwork network;
+
+	// ---------------------------------------------------------------------------------------
+	public ActivePathFinderParameters(){
+		Properties properties = (Properties) ServicesUtil.cytoscapePropertiesServiceRef.getProperties();
+		for (Enumeration e = properties.propertyNames() ; e.hasMoreElements() ;) {
+			String name = (String)e.nextElement();
+			if(name.startsWith("AP")){
+				String property = properties.getProperty(name);
+				if(name.endsWith("initialTemperature")){
+					initialTemperature = Double.valueOf(property);
+				}
+				else if(name.endsWith("finalTemperature")){
+					finalTemperature = Double.valueOf(property);
+				}
+				else if(name.endsWith("hubAdjustment")){
+					hubAdjustment = Double.valueOf(property);
+				}
+				else if(name.endsWith("totalIterations")){
+					totalIterations = Integer.valueOf(property);
+				}
+				else if(name.endsWith("numberPaths")){
+					numberOfPaths = Integer.valueOf(property);
+				}
+				else if(name.endsWith("displayInterval")){
+					displayInterval = Integer.valueOf(property);
+				}
+				else if(name.endsWith("hubSize")){
+					minHubSize = Integer.valueOf(property);
+				}
+				else if(name.endsWith("randomSeed")){
+					randomSeed = Integer.valueOf(property);
+				}
+				else if(name.endsWith("searchDepth")){
+					searchDepth = Integer.valueOf(property);
+				}
+				else if(name.endsWith("maxDepth")){
+					maxDepth = Integer.valueOf(property);
+				}
+				else if(name.endsWith("quench")){
+					toQuench = Boolean.valueOf(property);
+				}
+				else if(name.endsWith("mcBoolean")){
+					mcBoolean = Boolean.valueOf(property);
+				}
+				else if(name.endsWith("mcFileName")){
+					mcFileName = property;
+				}
+				else if(name.endsWith("regional")){
+					regionalBoolean = Boolean.valueOf(property);
+				}
+				else if(name.endsWith("exit")){
+					exit = Boolean.valueOf(property);
+				}
+				else if(name.endsWith("run")){
+					run = Boolean.valueOf(property);
+				}
+				else if(name.endsWith("save")){
+					save = Boolean.valueOf(property);
+				}
+				else if(name.endsWith("maxThreads")){
+					maxThreads = Integer.valueOf(property);
+				}
+				else if(name.endsWith("anneal")){
+					greedySearch = !Boolean.valueOf(property);
+				}
+				else if(name.endsWith("outputFile")){
+					outputFile = property;
+				}
+				else if(name.endsWith("expression")){
+					String [] splat = property.split(",");
+					for(int idx=0;idx < splat.length; idx += 1){
+						expressionAttrs.add(splat[idx]);
+					}
+				}
+				else if(name.endsWith("randomizeExpression")){
+					randomizeExpression = Boolean.valueOf(property);
+				}
+				else if(name.endsWith("randomIterations")){
+					randomIterations = Integer.valueOf(property);
+				}
+				else if(name.endsWith("overlapThreshold")){
+					overlapThreshold = Double.valueOf(property);
+				}
+				else{
+					logger.warn("Unrecognized option "+name);
+				}
+			}
+
+		}
 	}
-    }
-//	public ActivePathFinderParameters() {
-//	}
+	//	public ActivePathFinderParameters() {
+	//	}
 
 	// ---------------------------------------------------------------------------------------
 	/*
@@ -215,26 +214,26 @@ public class ActivePathFinderParameters {
 		this.randomIterations = oldAPFP.getRandomIterations();
 		this.overlapThreshold = oldAPFP.getOverlapThreshold();
 		setExpressionAttributes(oldAPFP.getExpressionAttributes());
-		
+
 	} // copy ctor
 
 	public boolean getRun(){
 		return this.run;
 	}
-	
+
 	public void setRun(boolean newValue){
 		this.run = newValue;
 	}
-	
+
 	public boolean getEnableMaxDepth(){
 		return this.enableMaxDepth;
 	}
-	
+
 	public void setEnableMaxDepth(boolean newValue){
 		this.enableMaxDepth = newValue;
 	}
-	
-    	public void setExit(boolean flag) {
+
+	public void setExit(boolean flag) {
 		exit = flag;
 	}
 
@@ -242,29 +241,29 @@ public class ActivePathFinderParameters {
 		return exit;
 	}
 
-    public boolean getRandomizeExpression(){
-	return randomizeExpression;
-    }
-
-    public void setRandomizeExpression(boolean flag){
-	this.randomizeExpression = flag;
-    }
-        public boolean getSave(){
-	    return save;
+	public boolean getRandomizeExpression(){
+		return randomizeExpression;
 	}
 
-        public void setSave(boolean flag){
-	    this.save = flag;
-        }
+	public void setRandomizeExpression(boolean flag){
+		this.randomizeExpression = flag;
+	}
+	public boolean getSave(){
+		return save;
+	}
 
-        public String getOutputFile(){
-	    return outputFile;
-        }
-    
-        public void setOutputFile(String file){
-	    this.outputFile = file;
-        }
-    
+	public void setSave(boolean flag){
+		this.save = flag;
+	}
+
+	public String getOutputFile(){
+		return outputFile;
+	}
+
+	public void setOutputFile(String file){
+		this.outputFile = file;
+	}
+
 	public boolean getSearchFromNodes() {
 		return searchFromNodes;
 	}
@@ -274,7 +273,7 @@ public class ActivePathFinderParameters {
 		this.isDefault = false;
 	}
 
-   	public boolean getRegionalBoolean() {
+	public boolean getRegionalBoolean() {
 		return regionalBoolean;
 	}
 	public void setRegionalBoolean(boolean newValue) {
@@ -324,13 +323,13 @@ public class ActivePathFinderParameters {
 		this.isDefault = false;
 	}
 
-    public int getRandomIterations() {
-	return randomIterations;
-    }
+	public int getRandomIterations() {
+		return randomIterations;
+	}
 
-    public void setRandomIterations(int value) {
-	this.randomIterations = value;
-	    }
+	public void setRandomIterations(int value) {
+		this.randomIterations = value;
+	}
 	public int getTotalIterations() {
 		return totalIterations;
 	}
@@ -383,8 +382,8 @@ public class ActivePathFinderParameters {
 		minHubSize = newValue;
 		this.isDefault = false;
 	}
- 
-   	public boolean getToQuench() {
+
+	public boolean getToQuench() {
 		return toQuench;
 	}
 	public void setToQuench(boolean newValue) {
@@ -395,7 +394,7 @@ public class ActivePathFinderParameters {
 	public boolean getGreedySearch() {
 		return greedySearch;
 	}
-	
+
 	public void setGreedySearch(boolean newValue){
 		this.greedySearch = newValue;
 	}
@@ -429,19 +428,19 @@ public class ActivePathFinderParameters {
 		// find all of the double type parameters
 		CyTable nodeAttrs = this.network.getDefaultNodeTable();
 		Object[] objs = CyTableUtil.getColumnNames(nodeAttrs).toArray();
-		
+
 		String[] names = new String[objs.length];//(String[])CyTableUtil.getColumnNames(nodeAttrs).toArray();
 
 		for (int i=0; i<objs.length; i++){
 			names[i] = (String)objs[i];
 		}
-		
-		
+
+
 		for ( String name : names ) {
 			if ( nodeAttrs.getColumn(name).getType() == Float.class ||nodeAttrs.getColumn(name).getType() == Double.class) {
 
 				List<Double>  values =nodeAttrs.getColumn(name).getValues(Double.class);
-				
+
 				if ( values == null ) 
 					continue; // no values have been defined for the attr yet
 
@@ -468,7 +467,7 @@ public class ActivePathFinderParameters {
 	public List<String> getExpressionAttributes() {
 		return expressionAttrs;
 	}
-	
+
 	public void setExpressionAttributes(Collection<String> names) {
 		expressionAttrs.clear();
 		expressionAttrs.addAll(names);
@@ -484,7 +483,7 @@ public class ActivePathFinderParameters {
 		this.scalingMethods.clear();
 		this.scalingMethods.addAll(scalingMethods);
 	}
-	
+
 	public List<Boolean> getSwitchSigs() {
 		return switchSigs;
 	}
@@ -493,7 +492,7 @@ public class ActivePathFinderParameters {
 		return scalingMethods;
 	}
 	//
-	
+
 	public void addExpressionAttribute(String name) {
 		if ( !expressionAttrs.contains(name) )
 			expressionAttrs.add(name);

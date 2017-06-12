@@ -5,20 +5,21 @@
 	<properties>
 		<bundle.symbolicName>jActiveModules</bundle.symbolicName>
 		<bundle.namespace>csplugins.jActiveModules</bundle.namespace>
-		<cytoscape.api.version>3.0.1</cytoscape.api.version>
-		<maven-bundle-plugin.version>2.3.4</maven-bundle-plugin.version>
-		<maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
+		<cytoscape.api.version>[3.5.0,3.5.1]</cytoscape.api.version>
+	
 		<osgi.api.version>4.2.0</osgi.api.version>
 		<junit.version>4.8.2</junit.version>
 		<mockito.version>1.8.5</mockito.version>
+		<maven-compiler-plugin.version>3.6.0</maven-compiler-plugin.version>
 	</properties>
 
-	<version>3.2.1</version>
+	<version>3.3.0</version>
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>csplugin</groupId>
 	<artifactId>jActiveModules-impl</artifactId>
 	<name>${bundle.symbolicName}</name>
+	
 	<packaging>bundle</packaging>
 
 	<dependencies>
@@ -77,11 +78,31 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.cytoscape-ci</groupId>
+			<artifactId>ci-bridge-impl</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
         	<groupId>cytoscape-sun</groupId>
         	<artifactId>jhall</artifactId>
         	<version>1.0</version>
         	<scope>provided</scope>
     	</dependency>
+    	
+    	
+		<dependency>
+			<groupId>javax.ws.rs</groupId>
+			<artifactId>javax.ws.rs-api</artifactId>
+			<version>2.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-annotations</artifactId>
+			<version>1.5.7</version>
+			<scope>provided</scope>
+		</dependency>
+    	
 		<dependency>
 			<groupId>org.ops4j.pax.logging</groupId>
 			<artifactId>pax-logging-api</artifactId>
@@ -153,30 +174,39 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.felix</groupId>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven-compiler-plugin.version}</version>
+				<extensions>true</extensions>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<encoding>UTF-8</encoding>
+					<optimize>true</optimize>
+					<showWarnings>true</showWarnings>
+					<showDeprecation>true</showDeprecation>
+					<compilerArguments>
+						<Xmaxwarns>10000</Xmaxwarns>
+						<Xmaxerrs>10000</Xmaxerrs>
+					</compilerArguments>
+				</configuration>
+			</plugin>
+			<plugin>
+			<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<version>${maven-bundle-plugin.version}</version>
+				<version>3.2.0</version>
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
 						<Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
 						<Bundle-Version>${project.version}</Bundle-Version>
-						<Export-Package>!${bundle.namespace}.*</Export-Package>
 						<Private-Package>${bundle.namespace}.*</Private-Package>
 						<Bundle-Activator>${bundle.namespace}.CyActivator</Bundle-Activator>
-						<Embed-Dependency>!*log4j;scope=compile|runtime;type=!pom</Embed-Dependency>
+						<Cytoscape-App-Dependencies>cyREST;3.4.0</Cytoscape-App-Dependencies>
+						<Embed-Dependency>*;scope=!provided|test;groupId=!org.cytoscape;ci-bridge-impl</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Import-Package>*;resolution:=optional</Import-Package>
 					</instructions>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>${maven-compiler-plugin.version}</version>
-				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
 				</configuration>
 			</plugin>
 		</plugins>

@@ -17,13 +17,19 @@ import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.event.CyEventHelper;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.events.CytoPanelComponentSelectedListener;
+import org.cytoscape.ci.CIErrorFactory;
+import org.cytoscape.ci.CIExceptionFactory;
+import org.cytoscape.ci_bridge_impl.CIProvider;
 import org.cytoscape.application.swing.CyAction;
 
 import org.osgi.framework.BundleContext;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.task.read.LoadVizmapFileTaskFactory;
+
+import java.io.IOException;
 import java.util.Properties;
 import csplugins.jActiveModules.dialogs.ActivePathsParameterPanel;
+import csplugins.jActiveModules.rest.ActiveModulesResource;
 import csplugins.jActiveModules.data.ActivePathFinderParameters;
 import csplugins.jActiveModules.util.swing.NetworkSelectorPanel;
 
@@ -33,7 +39,7 @@ public class CyActivator extends AbstractCyActivator {
 	}
 
 
-	public void start(BundleContext bc) {
+	public void start(BundleContext bc) throws IOException {
 
 		CySwingApplication cySwingApplicationServiceRef = getService(bc,CySwingApplication.class);
 		CyApplicationManager cyApplicationManagerServiceRef = getService(bc,CyApplicationManager.class);
@@ -94,6 +100,17 @@ public class CyActivator extends AbstractCyActivator {
 		registerService(bc,activeModulesCytoPanelComponent,CytoPanelComponent.class, new Properties());
 		
 		registerAllServices(bc, activeModulesUI, new Properties());		
+		
+		//CI Error handlers
+		//CIExceptionFactory ciExceptionFactory = this.getService(bc, CIExceptionFactory.class);
+		//CIErrorFactory ciErrorFactory = this.getService(bc, CIErrorFactory.class);
+		
+		//
+		CIExceptionFactory ciExceptionFactory = CIProvider.getCIExceptionFactory();
+		CIErrorFactory ciErrorFactory = CIProvider.getCIErrorFactory(bc);
+		
+		ActiveModulesResource activeModulesResource = new ActiveModulesResource(cyApplicationManagerServiceRef, ciErrorFactory, ciExceptionFactory, activeModulesUI);
+		registerService(bc, activeModulesResource, ActiveModulesResource.class, new Properties());
 	}
 }
 
