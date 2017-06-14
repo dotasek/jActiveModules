@@ -1138,13 +1138,17 @@ public class ActivePathsParameterPanel extends JPanel implements ItemListener,
 			if (setting.equals(NONRANDOM))
 				apfParams.setRandomSeed(17);
 			else
-				apfParams.setRandomSeed(Math.abs((int) System
-						.currentTimeMillis()));
+				apfParams.setRandomSeed(currentTimeSeed());
 			readout.setText("seed: " + apfParams.getRandomSeed());
 		}
 
 	} // RandomSeedListener
 
+	public static final int currentTimeSeed() {
+		return Math.abs((int) System
+				.currentTimeMillis());
+	}
+	
 	// -----------------------------------------------------------------------------
 	class AnnealSearchSwitchListener implements ActionListener, FocusListener {
 		public void focusGained(FocusEvent e) {

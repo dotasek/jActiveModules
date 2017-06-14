@@ -78,6 +78,11 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>work-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.cytoscape-ci</groupId>
 			<artifactId>ci-bridge-impl</artifactId>
 			<version>0.0.1-SNAPSHOT</version>

@@ -21,6 +21,9 @@ import csplugins.jActiveModules.ActivePaths;
 import csplugins.jActiveModules.ActivePathsTaskFactory;
 import csplugins.jActiveModules.ServicesUtil;
 import csplugins.jActiveModules.data.ActivePathFinderParameters;
+import csplugins.jActiveModules.dialogs.ActivePathsParameterPanel;
+import csplugins.jActiveModules.rest.models.ActiveModuleAnnealResult;
+import csplugins.jActiveModules.rest.models.ActiveModuleResult;
 import csplugins.jActiveModules.rest.models.AnnealStrategyParameters;
 import csplugins.jActiveModules.rest.models.Attribute;
 import csplugins.jActiveModules.rest.models.GeneralParameters;
@@ -52,7 +55,21 @@ public class ActiveModulesResource {
 	@Consumes("application/json")
 	@Path("{networkSUID}/findModulesWithSearchStrategy")
 	@ApiOperation(value = "Execute jActiveModules using a Search Strategy")
-	public void executeActivePaths(@PathParam(value="networkSUID") Long networkSUID, SearchStrategyParameters params) {
+	public ActiveModuleResult executeSearchStrategy(@PathParam(value="networkSUID") Long networkSUID, SearchStrategyParameters params) {
+		return executeActivePaths(networkSUID, params);
+	}
+
+	@POST
+	@Produces("application/json")
+	@Consumes("application/json")
+	@Path("{networkSUID}/findModulesWithAnnealStrategy")
+	@ApiOperation(value = "Execute jActiveModules using an Annealing Strategy")
+	public ActiveModuleResult executeAnnealStrategy(@PathParam(value="networkSUID") Long networkSUID, AnnealStrategyParameters params) {
+		return executeActivePaths(networkSUID, params);
+	}
+	
+	
+	public <K extends GeneralParameters> ActiveModuleResult executeActivePaths(Long networkSUID, K params) {
 		CyNetwork cyNetwork = cyApplicationManager.getCurrentNetwork();
 
 		if (cyNetwork == null) {
@@ -60,56 +77,33 @@ public class ActiveModulesResource {
 			throw ciExceptionFactory.getCIException(404, new CIError[]{ciErrorFactory.getCIError(404, resourceErrorRoot + ":" + "findModulesWithSearchStrategy"+ ":"+ 1, messageString)});		
 		}
 
+		ActivePathFinderParameters activePathFinderParameters;
+		Class<? extends ActiveModuleResult> resultClass;
+		if (params instanceof SearchStrategyParameters) {
+			activePathFinderParameters = getApfParams((SearchStrategyParameters)params);
+			resultClass = ActiveModuleResult.class;
+		} else if (params instanceof AnnealStrategyParameters) {
+			activePathFinderParameters = getApfParams((AnnealStrategyParameters)params);
+			resultClass = ActiveModuleAnnealResult.class;
+		} else {
+			throw new IllegalArgumentException();
+		}
+		activePathFinderParameters.setNetwork(cyNetwork);
+		
+		ActiveModulesTaskObserver activeModulesTaskObserver = new ActiveModulesTaskObserver("", "", resultClass);
+		
 		ActivePaths activePaths;
 		
-		ActivePathFinderParameters activePathFinderParameters = getApfParams(params);
-		activePathFinderParameters.setNetwork(cyNetwork);
+		
 		try {
-			activePaths = new ActivePaths(cyNetwork, getApfParams(params), activeModulesUI);
+			activePaths = new ActivePaths(cyNetwork, activePathFinderParameters, activeModulesUI);
+			ActivePathsTaskFactory factory = new ActivePathsTaskFactory(activePaths);
+			ServicesUtil.synchronousTaskManagerServiceRef.execute(factory.createTaskIterator(), activeModulesTaskObserver);
+			return activeModulesTaskObserver.activeModuleResult;
 		} catch (final Exception e) {
-			e.printStackTrace(System.err);
-			JOptionPane.showMessageDialog(ServicesUtil.cySwingApplicationServiceRef.getJFrame(),
-					"Error running jActiveModules (1)!  " + e.getMessage(),
-					"Error", JOptionPane.ERROR_MESSAGE);
-			return;
+			throw ciExceptionFactory.getCIException(500, new CIError[]{ciErrorFactory.getCIError(500, "", "")});
 		}
-
-		ActivePathsTaskFactory factory = new ActivePathsTaskFactory(activePaths);
-		ServicesUtil.taskManagerServiceRef.execute(factory.createTaskIterator());
 	}
-
-	/*
-	private ActivePathFinderParameters getApfParams() {
-		ActivePathFinderParameters activePathFinderParameters = new ActivePathFinderParameters();
-		activePathFinderParameters.setInitialTemperature(0);
-		activePathFinderParameters.setFinalTemperature(0);
-		activePathFinderParameters.setHubAdjustment(0);
-		activePathFinderParameters.setTotalIterations(1000);
-		activePathFinderParameters.setNumberOfPaths(0);
-		activePathFinderParameters.setDisplayInterval(0);
-		activePathFinderParameters.setMinHubSize(0);
-		activePathFinderParameters.setRandomSeed(0);
-		activePathFinderParameters.setSearchDepth(0);
-		activePathFinderParameters.setMaxDepth(0);
-		activePathFinderParameters.setToQuench(0);
-		activePathFinderParameters.setToUseMCFile();
-		activePathFinderParameters.setMCboolean();
-		activePathFinderParameters.setMcFileName();
-		activePathFinderParameters.setRegionalBoolean(false);
-		activePathFinderParameters.setSearchFromNodes(false);
-		activePathFinderParameters.setDefault(false);
-		this.maxThreads = oldAPFP.getMaxThreads();
-		this.exit = oldAPFP.getExit();
-		this.save = oldAPFP.getSave();
-		this.outputFile = oldAPFP.getOutputFile();
-		this.greedySearch = oldAPFP.getGreedySearch();
-		this.enableMaxDepth = oldAPFP.getEnableMaxDepth();
-		this.run = oldAPFP.getRun();
-		this.randomizeExpression = oldAPFP.getRandomizeExpression();
-		this.randomIterations = oldAPFP.getRandomIterations();
-		this.overlapThreshold = oldAPFP.getOverlapThreshold();
-	}
-	*/
 	
 	private void setAttributes(GeneralParameters generalParameters, ActivePathFinderParameters params) {
 		List<String> attributeNames = new ArrayList<String>();
@@ -132,12 +126,30 @@ public class ActiveModulesResource {
 		
 		setAttributes(params, activePathFinderParameters);
 		
+		activePathFinderParameters.setMaxDepth(params.maxDepthFromStartNodes);
+		activePathFinderParameters.setSearchDepth(params.searchDepth);
+		activePathFinderParameters.setSearchFromNodes(params.searchFromSelectedNodes);
+		
 		return activePathFinderParameters;
 	}
 	
 	private ActivePathFinderParameters getApfParams(AnnealStrategyParameters params) {
 		ActivePathFinderParameters activePathFinderParameters = new ActivePathFinderParameters();
 		activePathFinderParameters.setGreedySearch(false);
+		
+		setAttributes(params, activePathFinderParameters);
+		
+		
+		activePathFinderParameters.setTotalIterations(params.iterations);
+		activePathFinderParameters.setInitialTemperature(params.startTemp);
+		activePathFinderParameters.setFinalTemperature(params.endTemp);
+		activePathFinderParameters.setToQuench(params.quenching);
+		activePathFinderParameters.setMinHubSize(params.hubfinding);
+		if (params.seed != null) {
+			activePathFinderParameters.setRandomSeed(params.seed);
+		} else {
+			activePathFinderParameters.setRandomSeed(ActivePathsParameterPanel.currentTimeSeed());
+		}
 		return activePathFinderParameters;
 	}
 }

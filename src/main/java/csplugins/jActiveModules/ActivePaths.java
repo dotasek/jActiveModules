@@ -31,6 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import csplugins.jActiveModules.data.ActivePathFinderParameters;
+import csplugins.jActiveModules.rest.models.ActiveModuleAnnealResult;
+import csplugins.jActiveModules.rest.models.ActiveModuleResult;
+import csplugins.jActiveModules.rest.models.Module;
 //import csplugins.jActiveModules.util.Scaler;
 import csplugins.jActiveModules.util.ScalerFactory;
 
@@ -48,6 +51,7 @@ import org.cytoscape.model.CyRow;
 import java.util.Collection;
 //import java.io.File;
 import org.cytoscape.work.AbstractTask;
+import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
 import csplugins.jActiveModules.ServicesUtil;
 import java.io.File;
@@ -58,7 +62,7 @@ import java.io.InputStream;
 
 
 //-----------------------------------------------------------------------------------
-public class ActivePaths extends AbstractTask implements ActivePathViewer {
+public class ActivePaths extends AbstractTask implements ActivePathViewer, ObservableTask {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivePaths.class);
 
@@ -97,6 +101,8 @@ public class ActivePaths extends AbstractTask implements ActivePathViewer {
 	
 	private static final String NODE_SCORE = MODULE_FINDER_PREFIX + "activepathScore";
 
+	private ActiveModuleResult activeModuleResult;
+	
 	static {
 		if (overviewVS == null && moduleVS == null){
 			// Create visualStyles based on the definition in property files
@@ -127,8 +133,11 @@ public class ActivePaths extends AbstractTask implements ActivePathViewer {
 	
 	// ----------------------------------------------------------------
 	public ActivePaths(CyNetwork cyNetwork, ActivePathFinderParameters apfParams, ActiveModulesUI parentUI) {
+		
+		this.activeModuleResult = new ActiveModuleResult();
+		
 		this.apfParams = apfParams;
-
+		
 		try {			
 			MAX_NETWORK_VIEWS = new Integer(ServicesUtil.cytoscapePropertiesServiceRef.getProperties().getProperty("moduleNetworkViewCreationThreshold")).intValue();			
 		}
@@ -180,6 +189,9 @@ public class ActivePaths extends AbstractTask implements ActivePathViewer {
 			new ActivePathsFinder(expressionMap, attrNames, cyNetwork, apfParams,
 					      randomize ? null : mainFrame, parentUI, activePathsVect);
 		
+		if (apfParams.getGreedySearch() == false) {
+			
+		}
 		//activePaths = apf.findActivePaths();
 		   
 		ActivePathsTaskFactory factory = new ActivePathsTaskFactory(apf);
@@ -209,7 +221,7 @@ public class ActivePaths extends AbstractTask implements ActivePathViewer {
 		CyNetwork[] subnetworks = createSubnetworks();
 		
 		for (int i=0; i<subnetworks.length; i++){
-			ServicesUtil.cyNetworkManagerServiceRef.addNetwork(subnetworks[i]);			
+			ServicesUtil.cyNetworkManagerServiceRef.addNetwork(subnetworks[i]);
 		}
 
 		taskMonitor.setStatusMessage("Create an overview network for all nested network...");
@@ -218,12 +230,18 @@ public class ActivePaths extends AbstractTask implements ActivePathViewer {
 		final CyNetwork overview = ServicesUtil.cyNetworkFactoryServiceRef.createNetwork();
 		overview.getRow(overview).set("name", "jActiveModules Search Result "+ runCount++);
 		
+		activeModuleResult.modules = new ArrayList<Module>();
+		
 		Set<CyNode>  path_nodes = new HashSet<CyNode>();
 		for (int i=0; i< subnetworks.length; i++){
+			Module module = new Module();
 			CyNode newNode = overview.addNode(); //Cytoscape.getCyNode(subnetworks[i].getTitle(), true);
+			module.nodeSUID = newNode.getSUID();
+			
 			overview.getRow(newNode).set("name", subnetworks[i].getRow(subnetworks[i]).get("name", String.class));
 			path_nodes.add(newNode);
 			newNode.setNetworkPointer(subnetworks[i]);
+			module.networkSUID = subnetworks[i].getSUID();
 			// create an attribute for this new node
 			//Cytoscape.getNodeAttributes().setAttribute(newNode.getIdentifier(), NODE_SCORE, new Double(activePaths[i].getScore()));
 			
@@ -231,9 +249,12 @@ public class ActivePaths extends AbstractTask implements ActivePathViewer {
 				overview.getDefaultNodeTable().createColumn(NODE_SCORE, Double.class, false);
 			}
 			overview.getRow(newNode).set(NODE_SCORE, new Double(activePaths[i].getScore()));
+			module.activePathScore = activePaths[i].getScore();
+			activeModuleResult.modules.add(module);
 		}
 
 		ServicesUtil.cyNetworkManagerServiceRef.addNetwork(overview);
+		activeModuleResult.overviewNetworkSUID = overview.getSUID();
 		
 		//Edges indicate that nodes in nested networks exist in both nested networks
 		Set<CyEdge>  path_edges = getPathEdges(overview, path_nodes); //new HashSet<CyEdge>();
@@ -309,7 +330,7 @@ public class ActivePaths extends AbstractTask implements ActivePathViewer {
 				theView.updateView();
 		 }
 		 
-			taskMonitor.setProgress(1.0);
+		taskMonitor.setProgress(1.0);
 	}
 	
 
@@ -680,6 +701,26 @@ public class ActivePaths extends AbstractTask implements ActivePathViewer {
 		displayPath(activePath, true, pathTitle);
 	}
 	// ------------------------------------------------------------------------------
+
+	@Override
+	public <R> R getResults(Class<? extends R> type) {
+		if (type.equals(String.class))
+		{
+			return (R)("Success.");
+		} else if (type.equals(ActiveModuleAnnealResult.class)){
+			if (apfParams.getGreedySearch()) {
+				throw new IllegalArgumentException();
+			}
+			ActiveModuleAnnealResult result = new ActiveModuleAnnealResult();
+			result.overviewNetworkSUID = activeModuleResult.overviewNetworkSUID;
+			result.modules = activeModuleResult.modules;
+			result.seed = apfParams.getRandomSeed();
+			return (R) result;
+		} else if (type.equals(ActiveModuleResult.class)){
+			return (R) activeModuleResult;
+		}
+		return null;
+	}
 	
 	/*
 	private CyLayoutAlgorithm tuning() {
